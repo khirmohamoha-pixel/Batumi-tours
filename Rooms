@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Alamine Batumi — Rooms</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#C9A84C;--gold-light:#E8CC7A;--dark:#0D0D0D;--dark2:#141414;--dark3:#1a1a1a;--cream:#F5EDD6;--text:#E8E0D0;--muted:#888;--radius:16px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--dark);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+.header{padding:20px 20px 12px;border-bottom:1px solid #1a1a1a;position:sticky;top:0;z-index:100;background:var(--dark);backdrop-filter:blur(10px)}
+.header-top{display:flex;align-items:center;gap:12px}
+.back-btn{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1;display:none}
+.back-btn.visible{display:block}
+.header-info{flex:1}
+.header h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--gold)}
+.header p{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:1px;text-transform:uppercase}
+.step-indicator{display:flex;gap:6px;margin-top:12px}
+.step-dot{height:3px;border-radius:2px;flex:1;background:#2a2a2a;transition:background 0.3s}
+.step-dot.active{background:var(--gold)}
+.step-dot.done{background:rgba(201,168,76,0.4)}
+.screen{display:none;padding:20px 20px 100px;animation:fadeIn 0.3s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:16px}
+.property-grid{display:flex;flex-direction:column;gap:14px}
+.property-card{border-radius:var(--radius);overflow:hidden;border:1px solid #222;cursor:pointer;transition:all 0.2s;position:relative}
+.property-card:active{transform:scale(0.98)}
+.property-card:hover{border-color:var(--gold)}
+.property-img{width:100%;height:180px;object-fit:cover;display:block}
+.property-img-placeholder{width:100%;height:180px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-size:48px}
+.property-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.9),transparent);padding:20px 16px 16px}
+.property-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#fff}
+.property-sub{font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px}
+.property-arrow{position:absolute;top:16px;right:16px;background:rgba(201,168,76,0.9);color:#000;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px}
+.unit-grid{display:flex;flex-direction:column;gap:14px}
+.unit-card{border-radius:var(--radius);overflow:hidden;border:1px solid #222;cursor:pointer;transition:all 0.2s;background:var(--dark2)}
+.unit-card:active{transform:scale(0.98)}
+.unit-card:hover{border-color:var(--gold)}
+.unit-img{width:100%;height:160px;object-fit:cover;display:block}
+.unit-img-placeholder{width:100%;height:160px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-size:40px}
+.unit-info{padding:14px}
+.unit-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--cream);margin-bottom:4px}
+.unit-desc{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.unit-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.unit-tag{background:#1f1f1f;border:1px solid #2a2a2a;border-radius:20px;padding:3px 10px;font-size:11px;color:var(--muted)}
+.unit-footer{display:flex;align-items:center;justify-content:space-between}
+.unit-price{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--gold)}
+.unit-price span{font-size:12px;font-family:'DM Sans',sans-serif;color:var(--muted);font-weight:400}
+.select-btn{background:var(--gold);color:var(--dark);border:none;padding:9px 18px;border-radius:30px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.select-btn:active{background:var(--gold-light)}
+.booking-hero{height:180px;position:relative;overflow:hidden;border-radius:var(--radius);margin-bottom:20px}
+.booking-hero-img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.booking-hero-placeholder{width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-size:48px}
+.booking-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent)}
+.booking-hero-content{position:absolute;bottom:16px;left:16px;right:16px}
+.booking-property{font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.booking-unit{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:#fff}
+.booking-price{font-size:14px;color:rgba(255,255,255,0.7);margin-top:2px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:11px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;display:block}
+.form-input{width:100%;background:var(--dark2);border:1px solid #2a2a2a;border-radius:12px;padding:14px 16px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;-webkit-appearance:none}
+.form-input:focus{border-color:var(--gold)}
+.form-input::placeholder{color:#444}
+.form-input.error{border-color:#e57373}
+.date-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.people-selector{display:flex;align-items:center;background:var(--dark2);border:1px solid #2a2a2a;border-radius:12px;overflow:hidden}
+.people-btn{background:none;border:none;color:var(--gold);font-size:22px;width:52px;height:52px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.people-btn:active{background:#1a1a1a}
+.people-count{flex:1;text-align:center;font-size:20px;font-family:'Cormorant Garamond',serif;color:var(--cream)}
+.nights-summary{background:var(--dark2);border:1px solid #2a2a2a;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:none}
+.nights-summary.visible{display:block}
+.nights-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.nights-row:last-child{margin-bottom:0;padding-top:8px;border-top:1px solid #2a2a2a;font-weight:500}
+.nights-row span:first-child{color:var(--muted)}
+.nights-row span:last-child{color:var(--cream)}
+.nights-total{color:var(--gold) !important;font-size:15px !important}
+.submit-btn{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);border:none;padding:16px;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px;transition:opacity 0.2s}
+.submit-btn:disabled{opacity:0.6;cursor:not-allowed}
+.success-screen{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 0 100px}
+.success-icon{width:80px;height:80px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:24px;animation:pop 0.4s ease}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+.success-title{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--cream);margin-bottom:10px}
+.success-text{font-size:14px;color:var(--muted);line-height:1.6;max-width:280px;margin-bottom:24px}
+.success-detail{background:var(--dark2);border:1px solid #222;border-radius:var(--radius);padding:16px 20px;width:100%;text-align:left}
+.success-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:13px}
+.success-row:last-child{border-bottom:none}
+.success-row span:first-child{color:var(--muted)}
+.success-row span:last-child{color:var(--cream);font-weight:500}
+.loading{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px}
+.error-msg{font-size:11px;color:#e57373;margin-top:4px;display:none}
+.error-msg.visible{display:block}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+    <div class="header-info">
+      <h1 id="headerTitle">Alamine Batumi</h1>
+      <p id="headerSub">Choose your accommodation</p>
+    </div>
+  </div>
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+  </div>
+</div>
+
+<div class="screen active" id="screen-properties">
+  <p class="section-title">Our Properties</p>
+  <div class="property-grid" id="property-grid">
+    <div class="loading">Loading properties...</div>
+  </div>
+</div>
+
+<div class="screen" id="screen-units">
+  <p class="section-title">Available Units</p>
+  <div class="unit-grid" id="unit-grid"></div>
+</div>
+
+<div class="screen" id="screen-booking">
+  <div class="booking-hero">
+    <div class="booking-hero-placeholder" id="booking-hero-placeholder">🏨</div>
+    <img class="booking-hero-img" id="booking-hero-img" src="" alt="" style="display:none">
+    <div class="booking-hero-overlay"></div>
+    <div class="booking-hero-content">
+      <div class="booking-property" id="booking-property-name"></div>
+      <div class="booking-unit" id="booking-unit-name"></div>
+      <div class="booking-price" id="booking-price-display"></div>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Full Name</label>
+    <input type="text" class="form-input" id="input-name" placeholder="Enter your full name" autocomplete="name">
+    <div class="error-msg" id="nameError">Please enter your name</div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Number of Guests</label>
+    <div class="people-selector">
+      <button class="people-btn" onclick="changePeople(-1)">−</button>
+      <div class="people-count" id="people-count">1</div>
+      <button class="people-btn" onclick="changePeople(1)">+</button>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Check-in & Check-out</label>
+    <div class="date-grid">
+      <input type="date" class="form-input" id="input-checkin" onchange="updateNights()">
+      <input type="date" class="form-input" id="input-checkout" onchange="updateNights()">
+    </div>
+    <div class="error-msg" id="dateError">Please select valid dates</div>
+  </div>
+  <div class="nights-summary" id="nights-summary">
+    <div class="nights-row"><span>Check-in</span><span id="sum-checkin">—</span></div>
+    <div class="nights-row"><span>Check-out</span><span id="sum-checkout">—</span></div>
+    <div class="nights-row"><span>Duration</span><span id="sum-nights">—</span></div>
+    <div class="nights-row"><span class="nights-total">Total</span><span class="nights-total" id="sum-total">—</span></div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Phone Number</label>
+    <input type="tel" class="form-input" id="input-phone" placeholder="+995 555 000 000" autocomplete="tel">
+    <div class="error-msg" id="phoneError">Please enter your phone number</div>
+  </div>
+  <button class="submit-btn" id="submit-btn" onclick="submitBooking()">Confirm Booking ✓</button>
+</div>
+
+<div class="screen" id="screen-success">
+  <div class="success-screen">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Booking Received</div>
+    <div class="success-text">Thank you! Our team will contact you shortly to confirm your reservation.</div>
+    <div class="success-detail" id="success-detail"></div>
+  </div>
+</div>
+
+<script>
+const tg=window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();tg.setHeaderColor('#0D0D0D');tg.setBackgroundColor('#0D0D0D')}
+
+const WEBHOOK_URL='https://n8n.srv1678654.hstgr.cloud/webhook/a80c982a-fe3b-41bf-8cf4-72c569076cdb';
+const SHEET_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vTCo-TrWPAlPU_8G_3lNTOACeblqiH5UBUjz4zu3GvCqwggdC6zxeIpq0H_XVVgyugG6XztVAId0cEe/pub?gid=0&single=true&output=csv';
+const SHEET_URL='https://corsproxy.io/?'+encodeURIComponent(SHEET_CSV);
+
+let allRooms=[];
+let selectedUnit=null;
+let peopleCount=1;
+let currentScreen='properties';
+let screenHistory=[];
+
+const today=new Date().toISOString().split('T')[0];
+document.getElementById('input-checkin').min=today;
+document.getElementById('input-checkout').min=today;
+
+async function loadRooms(){
+  try{
+    const res=await fetch(SHEET_URL);
+    const csv=await res.text();
+    const lines=csv.trim().split('\n');
+    const headers=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/\s+/g,'_'));
+    allRooms=lines.slice(1).map(line=>{
+      const vals=line.split(',');
+      const room={};
+      headers.forEach((h,i)=>room[h]=vals[i]?.trim()||'');
+      return room;
+    }).filter(r=>r.property);
+    renderProperties();
+  }catch(e){
+    document.getElementById('property-grid').innerHTML='<div class="loading">Failed to load. Please try again.</div>';
+  }
+}
+
+function renderProperties(){
+  const propertiesMap={};
+  allRooms.forEach(r=>{
+    if(!propertiesMap[r.property]) propertiesMap[r.property]=r.property_image||'';
+  });
+  const grid=document.getElementById('property-grid');
+  grid.innerHTML=Object.entries(propertiesMap).map(([name,img])=>`
+    <div class="property-card" onclick="selectProperty('${name.replace(/'/g,"\\'")}')">
+      ${img?`<img class="property-img" src="${img}" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:'' }
+      <div class="property-img-placeholder" ${img?'style="display:none"':''}>🏨</div>
+      <div class="property-overlay">
+        <div class="property-name">${name}</div>
+        <div class="property-sub">Tap to view units</div>
+      </div>
+      <div class="property-arrow">›</div>
+    </div>
+  `).join('');
+}
+
+function selectProperty(name){
+  const units=allRooms.filter(r=>r.property===name);
+  const grid=document.getElementById('unit-grid');
+  grid.innerHTML=units.map(u=>`
+    <div class="unit-card" onclick="selectUnit(${JSON.stringify(u).replace(/"/g,'&quot;')})">
+      ${u.image?`<img class="unit-img" src="${u.image}" alt="${u.unit_type}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:'' }
+      <div class="unit-img-placeholder" ${u.image?'style="display:none"':''}>🛏</div>
+      <div class="unit-info">
+        <div class="unit-name">${u.unit_type}</div>
+        <div class="unit-desc">${u.description}</div>
+        <div class="unit-tags">
+          <span class="unit-tag">👥 Up to ${u.capacity} guests</span>
+          ${u.amenities.split('+').map(a=>`<span class="unit-tag">${a.trim()}</span>`).join('')}
+        </div>
+        <div class="unit-footer">
+          <div class="unit-price">${u.price} GEL <span>/ night</span></div>
+          <button class="select-btn" onclick="event.stopPropagation();selectUnit(${JSON.stringify(u).replace(/"/g,'&quot;')})">Select</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  showScreen('units');
+  updateHeader('units',name);
+}
+
+function selectUnit(u){
+  if(typeof u==='string') u=JSON.parse(u.replace(/&quot;/g,'"'));
+  selectedUnit=u;
+  peopleCount=1;
+  document.getElementById('people-count').textContent=1;
+  const img=document.getElementById('booking-hero-img');
+  const placeholder=document.getElementById('booking-hero-placeholder');
+  if(u.image){img.src=u.image;img.style.display='block';placeholder.style.display='none';}
+  else{img.style.display='none';placeholder.style.display='flex';}
+  document.getElementById('booking-property-name').textContent=u.property;
+  document.getElementById('booking-unit-name').textContent=u.unit_type;
+  document.getElementById('booking-price-display').textContent=`${u.price} GEL / night`;
+  document.getElementById('input-name').value='';
+  document.getElementById('input-checkin').value='';
+  document.getElementById('input-checkout').value='';
+  document.getElementById('input-phone').value='';
+  document.getElementById('nights-summary').classList.remove('visible');
+  document.querySelectorAll('.error-msg').forEach(e=>e.classList.remove('visible'));
+  document.querySelectorAll('.form-input').forEach(e=>e.classList.remove('error'));
+  showScreen('booking');
+  updateHeader('booking',u.unit_type);
+}
+
+function showScreen(name){
+  screenHistory.push(currentScreen);
+  currentScreen=name;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  window.scrollTo(0,0);
+  updateDots();
+  document.getElementById('backBtn').classList.toggle('visible',name!=='properties');
+}
+
+function goBack(){
+  if(screenHistory.length===0) return;
+  currentScreen=screenHistory.pop();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+currentScreen).classList.add('active');
+  window.scrollTo(0,0);
+  updateDots();
+  updateHeader(currentScreen);
+  document.getElementById('backBtn').classList.toggle('visible',currentScreen!=='properties');
+}
+
+function updateHeader(screen,subtitle){
+  const titles={properties:'Alamine Batumi',units:subtitle||'Select Unit',booking:'Book Your Stay',success:'Booking Confirmed'};
+  const subs={properties:'Choose your accommodation',units:'Available units',booking:'Fill in your details',success:''};
+  document.getElementById('headerTitle').textContent=titles[screen]||'Alamine Batumi';
+  document.getElementById('headerSub').textContent=subs[screen]||'';
+}
+
+function updateDots(){
+  const map={properties:0,units:1,booking:2,success:2};
+  const step=map[currentScreen]||0;
+  document.querySelectorAll('.step-dot').forEach((d,i)=>{
+    d.classList.toggle('active',i===step);
+    d.classList.toggle('done',i<step);
+  });
+}
+
+function changePeople(delta){
+  const max=parseInt(selectedUnit?.capacity||10);
+  peopleCount=Math.max(1,Math.min(max,peopleCount+delta));
+  document.getElementById('people-count').textContent=peopleCount;
+}
+
+function updateNights(){
+  const checkin=document.getElementById('input-checkin').value;
+  const checkout=document.getElementById('input-checkout').value;
+  if(!checkin||!checkout) return;
+  const d1=new Date(checkin);
+  const d2=new Date(checkout);
+  const nights=Math.round((d2-d1)/(1000*60*60*24));
+  if(nights<=0){document.getElementById('input-checkout').value='';return;}
+  const price=parseFloat(selectedUnit?.price||0);
+  const total=price*nights;
+  document.getElementById('sum-checkin').textContent=d1.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('sum-checkout').textContent=d2.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('sum-nights').textContent=`${nights} night${nights>1?'s':''}`;
+  document.getElementById('sum-total').textContent=`${total} GEL`;
+  document.getElementById('nights-summary').classList.add('visible');
+  document.getElementById('input-checkout').min=checkin;
+}
+
+async function submitBooking(){
+  let valid=true;
+  const name=document.getElementById('input-name').value.trim();
+  const checkin=document.getElementById('input-checkin').value;
+  const checkout=document.getElementById('input-checkout').value;
+  const phone=document.getElementById('input-phone').value.trim();
+  if(!name){document.getElementById('nameError').classList.add('visible');document.getElementById('input-name').classList.add('error');valid=false;}
+  else{document.getElementById('nameError').classList.remove('visible');document.getElementById('input-name').classList.remove('error');}
+  if(!checkin||!checkout||new Date(checkout)<=new Date(checkin)){document.getElementById('dateError').classList.add('visible');document.getElementById('input-checkin').classList.add('error');document.getElementById('input-checkout').classList.add('error');valid=false;}
+  else{document.getElementById('dateError').classList.remove('visible');document.getElementById('input-checkin').classList.remove('error');document.getElementById('input-checkout').classList.remove('error');}
+  if(!phone){document.getElementById('phoneError').classList.add('visible');document.getElementById('input-phone').classList.add('error');valid=false;}
+  else{document.getElementById('phoneError').classList.remove('visible');document.getElementById('input-phone').classList.remove('error');}
+  if(!valid) return;
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;
+  btn.textContent='Sending...';
+  const nights=Math.round((new Date(checkout)-new Date(checkin))/(1000*60*60*24));
+  const total=parseFloat(selectedUnit.price)*nights;
+  const bookingData={type:'room',property:selectedUnit.property,unit:selectedUnit.unit_type,price_per_night:selectedUnit.price,nights,total,name,people:peopleCount,checkin,checkout,phone};
+  try{
+    await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bookingData)});
+  }catch(e){console.log('Webhook error:',e);}
+  const d1=new Date(checkin);
+  const d2=new Date(checkout);
+  document.getElementById('success-detail').innerHTML=`
+    <div class="success-row"><span>Property</span><span>${selectedUnit.property}</span></div>
+    <div class="success-row"><span>Unit</span><span>${selectedUnit.unit_type}</span></div>
+    <div class="success-row"><span>Name</span><span>${name}</span></div>
+    <div class="success-row"><span>Guests</span><span>${peopleCount} person${peopleCount>1?'s':''}</span></div>
+    <div class="success-row"><span>Check-in</span><span>${d1.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</span></div>
+    <div class="success-row"><span>Check-out</span><span>${d2.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</span></div>
+    <div class="success-row"><span>Nights</span><span>${nights}</span></div>
+    <div class="success-row"><span>Phone</span><span>${phone}</span></div>
+    <div class="success-row"><span>Total</span><span style="color:var(--gold);font-size:15px">${total} GEL</span></div>
+  `;
+  showScreen('success');
+  updateHeader('success');
+  document.getElementById('backBtn').classList.remove('visible');
+}
+
+loadRooms();
+</script>
+</body>
+</html>
