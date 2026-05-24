@@ -110,7 +110,7 @@ const today=new Date().toISOString().split('T')[0];
 document.getElementById('input-date').min=today;
 
 const SHEET_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vTfW5r941vQNB9U7chAzYnysd2-3eMCGGYiQj157YMwz_mVP3ReWEfZaf_leAzUh7S0rKqWH1BHHaWj/pub?gid=0&single=true&output=csv';
-const SHEET_URL='https://api.allorigins.win/raw?url='+encodeURIComponent(SHEET_CSV);
+const SHEET_URL='https://corsproxy.io/?'+encodeURIComponent(SHEET_CSV);
 
 async function loadTours(){
   try{
