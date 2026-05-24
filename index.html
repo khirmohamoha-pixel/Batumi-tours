@@ -120,7 +120,7 @@ document.getElementById('input-date').min=today;
 
 const WEBHOOK_URL='https://n8n.srv1678654.hstgr.cloud/webhook/a80c982a-fe3b-41bf-8cf4-72c569076cdb';
 const SHEET_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vTfW5r941vQNB9U7chAzYnysd2-3eMCGGYiQj157YMwz_mVP3ReWEfZaf_leAzUh7S0rKqWH1BHHaWj/pub?gid=0&single=true&output=csv';
-const SHEET_URL='https://corsproxy.io/?'+encodeURIComponent(SHEET_CSV);
+const SHEET_URL='https://api.allorigins.win/raw?url='+encodeURIComponent(SHEET_CSV);
 
 async function loadTours(){
   try{
@@ -206,12 +206,13 @@ async function submitBooking(){
     phone:phone||'Not provided'
   };
 
-  try ( await fetch(WEBHOOK_URL,{
-  method:'POST',
-  mode:'no-cors',
-  headers:{'Content-Type':'text/plain'},
-  body:JSON.stringify(bookingData)
-});
+  try{
+    await fetch(WEBHOOK_URL,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify(bookingData)
+    });
   }catch(e){
     console.log('Webhook error:',e);
   }
@@ -222,7 +223,7 @@ async function submitBooking(){
     <div class="success-detail-row"><span>Name</span><span>${name}</span></div>
     <div class="success-detail-row"><span>People</span><span>${peopleCount} person${peopleCount>1?'s':''}</span></div>
     <div class="success-detail-row"><span>Date</span><span>${new Date(date).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</span></div>
-    <div class="success-detail-row"><span>Total</span><span>${(priceNum*peopleCount).toFixed(0)} GEL</span></div>
+    <div class="success-detail-row"><span>Total</span><span>${isNaN(priceNum)?selectedTour.price:(priceNum*peopleCount).toFixed(0)+' GEL'}</span></div>
   `;
   showScreen('success');
 }
