@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Verify Voucher — Alamine Batumi</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#C9A84C;--gold-light:#E8CC7A;--dark:#0D0D0D;--dark2:#141414;--cream:#F5EDD6;--text:#E8E0D0;--muted:#888;--green:#4caf82;--red:#e57373;--radius:16px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--dark);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.loading-screen{text-align:center}
+.loader{width:52px;height:52px;border:3px solid #2a2a2a;border-top:3px solid var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:var(--muted);letter-spacing:1px}
+.voucher-card{width:100%;max-width:380px;background:var(--dark2);border-radius:20px;overflow:hidden;border:1px solid #222}
+.voucher-header{padding:24px;text-align:center;background:linear-gradient(135deg,rgba(201,168,76,0.1),transparent)}
+.valid-icon{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px;animation:pop 0.4s ease}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+.valid-icon.valid{background:rgba(76,175,130,0.15);border:2px solid rgba(76,175,130,0.4)}
+.valid-icon.invalid{background:rgba(229,115,115,0.15);border:2px solid rgba(229,115,115,0.4)}
+.valid-icon.used{background:rgba(136,136,136,0.15);border:2px solid rgba(136,136,136,0.4)}
+.status-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;margin-bottom:6px}
+.status-title.valid{color:var(--green)}
+.status-title.invalid{color:var(--red)}
+.status-title.used{color:var(--muted)}
+.status-sub{font-size:13px;color:var(--muted)}
+.voucher-body{padding:20px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #1f1f1f;font-size:14px}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--muted);font-size:12px}
+.info-value{color:var(--cream);font-weight:500;text-align:right;max-width:60%}
+.discount-value{color:var(--gold);font-size:18px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.voucher-footer{padding:20px;border-top:1px solid #1f1f1f}
+.confirm-btn{width:100%;background:linear-gradient(135deg,var(--green),#66bb8a);color:#fff;border:none;padding:16px;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity 0.2s;margin-bottom:10px}
+.confirm-btn:disabled{opacity:0.5;cursor:not-allowed}
+.booking-id{text-align:center;font-size:11px;color:#444;letter-spacing:2px;text-transform:uppercase;margin-top:8px}
+.error-card{width:100%;max-width:380px;background:var(--dark2);border-radius:20px;padding:40px 24px;text-align:center;border:1px solid #222}
+.error-icon{font-size:48px;margin-bottom:16px}
+.error-title{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--red);margin-bottom:8px}
+.error-text{font-size:14px;color:var(--muted);line-height:1.6}
+.confirmed-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:100}
+.confirmed-overlay.visible{display:flex}
+.confirmed-box{background:var(--dark2);border-radius:20px;padding:40px 32px;text-align:center;border:1px solid rgba(76,175,130,0.3);max-width:320px;width:90%}
+.confirmed-icon{font-size:56px;margin-bottom:16px;animation:pop 0.4s ease}
+.confirmed-title{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--green);margin-bottom:8px}
+.confirmed-text{font-size:14px;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="loading-screen" id="loading-screen">
+  <div class="loader"></div>
+  <div class="loading-text">Verifying voucher...</div>
+</div>
+<div id="content" style="display:none;width:100%;max-width:380px"></div>
+<div class="confirmed-overlay" id="confirmed-overlay">
+  <div class="confirmed-box">
+    <div class="confirmed-icon">✅</div>
+    <div class="confirmed-title">Discount Applied</div>
+    <div class="confirmed-text">The discount has been confirmed. You're all set!</div>
+  </div>
+</div>
+<script>
+const WEBHOOK_URL='https://n8n.srv1678654.hstgr.cloud/webhook/a80c982a-fe3b-41bf-8cf4-72c569076cdb';
+const STORAGE_KEY='used_vouchers';
+
+function getParams(){
+  const p=new URLSearchParams(window.location.search);
+  return{id:p.get('id')||'',activity:p.get('activity')||'',name:p.get('name')||'',people:p.get('people')||'1',date:p.get('date')||'',discount:p.get('discount')||'0',phone:p.get('phone')||''};
+}
+
+function isUsed(id){
+  try{const used=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');return used.includes(id);}catch{return false;}
+}
+
+function markUsed(id){
+  try{const used=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');used.push(id);localStorage.setItem(STORAGE_KEY,JSON.stringify(used));}catch{}
+}
+
+async function notifyWebhook(data){
+  try{await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}catch(e){console.log('Webhook error:',e);}
+}
+
+function formatDate(dateStr){
+  if(!dateStr) return '—';
+  try{const d=new Date(dateStr);return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}catch{return dateStr;}
+}
+
+async function init(){
+  const params=getParams();
+  if(params.id){
+    await notifyWebhook({type:'qr_scanned',booking_id:params.id,activity:params.activity,name:params.name,people:params.people,date:params.date,discount:params.discount,phone:params.phone});
+  }
+  setTimeout(()=>{
+    document.getElementById('loading-screen').style.display='none';
+    const content=document.getElementById('content');
+    content.style.display='block';
+    if(!params.id||!params.activity){
+      content.innerHTML=`<div class="error-card"><div class="error-icon">❌</div><div class="error-title">Invalid QR Code</div><div class="error-text">This QR code is not valid. Please ask the customer to show a valid voucher.</div></div>`;
+      return;
+    }
+    const used=isUsed(params.id);
+    if(used){
+      content.innerHTML=`
+        <div class="voucher-card">
+          <div class="voucher-header">
+            <div class="valid-icon used">⚠️</div>
+            <div class="status-title used">Already Used</div>
+            <div class="status-sub">This voucher has already been redeemed</div>
+          </div>
+          <div class="voucher-body">
+            <div class="info-row"><span class="info-label">Activity</span><span class="info-value">${params.activity}</span></div>
+            <div class="info-row"><span class="info-label">Customer</span><span class="info-value">${params.name}</span></div>
+            <div class="info-row"><span class="info-label">Code</span><span class="info-value" style="font-size:12px;letter-spacing:1px">${params.id}</span></div>
+          </div>
+        </div>`;
+      return;
+    }
+    content.innerHTML=`
+      <div class="voucher-card">
+        <div class="voucher-header">
+          <div class="valid-icon valid">✓</div>
+          <div class="status-title valid">Valid Voucher</div>
+          <div class="status-sub">This discount is ready to be applied</div>
+        </div>
+        <div class="voucher-body">
+          <div class="info-row"><span class="info-label">Activity</span><span class="info-value">${params.activity}</span></div>
+          <div class="info-row"><span class="info-label">Customer</span><span class="info-value">${params.name}</span></div>
+          <div class="info-row"><span class="info-label">People</span><span class="info-value">${params.people} person${params.people>1?'s':''}</span></div>
+          <div class="info-row"><span class="info-label">Date</span><span class="info-value">${formatDate(params.date)}</span></div>
+          <div class="info-row"><span class="info-label">Phone</span><span class="info-value">${params.phone}</span></div>
+          <div class="info-row"><span class="info-label">Discount</span><span class="info-value discount-value">${params.discount}% OFF</span></div>
+        </div>
+        <div class="voucher-footer">
+          <button class="confirm-btn" id="confirm-btn" onclick="confirmRedemption()">✓ Confirm & Apply Discount</button>
+          <div class="booking-id">ID: ${params.id}</div>
+        </div>
+      </div>`;
+  },1500);
+}
+
+async function confirmRedemption(){
+  const params=getParams();
+  const btn=document.getElementById('confirm-btn');
+  btn.disabled=true;
+  btn.textContent='Confirming...';
+  markUsed(params.id);
+  await notifyWebhook({type:'qr_confirmed',booking_id:params.id,activity:params.activity,name:params.name,people:params.people,date:params.date,discount:params.discount,phone:params.phone});
+  document.getElementById('confirmed-overlay').classList.add('visible');
+}
+
+init();
+</script>
+</body>
+</html>
