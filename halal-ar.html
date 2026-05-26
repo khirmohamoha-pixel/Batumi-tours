@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Alamine Batumi — المطاعم الحلال</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#C9A84C;--gold-light:#E8CC7A;--dark:#0D0D0D;--dark2:#141414;--cream:#F5EDD6;--text:#E8E0D0;--muted:#888;--radius:16px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--dark);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;direction:rtl}
+.header{padding:20px 20px 12px;border-bottom:1px solid #1a1a1a;position:sticky;top:0;z-index:100;background:var(--dark);backdrop-filter:blur(10px)}
+.header-top{display:flex;align-items:center;gap:12px}
+.back-btn{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1;display:none}
+.back-btn.visible{display:block}
+.header-info{flex:1}
+.header h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--gold)}
+.header p{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:1px}
+.step-indicator{display:flex;gap:6px;margin-top:12px}
+.step-dot{height:3px;border-radius:2px;flex:1;background:#2a2a2a;transition:background 0.3s}
+.step-dot.active{background:var(--gold)}
+.step-dot.done{background:rgba(201,168,76,0.4)}
+.screen{display:none;padding:20px 20px 100px;animation:fadeIn 0.3s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--gold);letter-spacing:2px;margin-bottom:16px}
+.loading{text-align:center;padding:80px 20px}
+.loader{width:44px;height:44px;border:3px solid #2a2a2a;border-top:3px solid var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:var(--muted);letter-spacing:1px}
+.loading-sub{font-size:11px;color:#444;margin-top:6px}
+.restaurant-grid{display:flex;flex-direction:column;gap:14px}
+.restaurant-card{border-radius:var(--radius);overflow:hidden;border:1px solid #222;cursor:pointer;transition:all 0.2s;background:var(--dark2)}
+.restaurant-card:active{transform:scale(0.98)}
+.restaurant-card:hover{border-color:var(--gold)}
+.restaurant-img{width:100%;height:180px;object-fit:cover;display:block}
+.restaurant-img-placeholder{width:100%;height:180px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-size:48px}
+.restaurant-info{padding:14px}
+.restaurant-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.restaurant-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--cream)}
+.discount-badge{background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--gold);font-weight:600;white-space:nowrap}
+.restaurant-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px}
+.restaurant-meta{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#666}
+.restaurant-footer{display:flex;align-items:center;justify-content:space-between}
+.halal-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:#4caf82;background:rgba(76,175,130,0.1);border:1px solid rgba(76,175,130,0.2);border-radius:20px;padding:4px 10px}
+.book-btn{background:var(--gold);color:var(--dark);border:none;padding:9px 18px;border-radius:30px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.book-btn:active{background:var(--gold-light)}
+.booking-hero{height:180px;position:relative;overflow:hidden;border-radius:var(--radius);margin-bottom:20px}
+.booking-hero-img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.booking-hero-placeholder{width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-size:48px}
+.booking-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent)}
+.booking-hero-content{position:absolute;bottom:16px;right:16px;left:16px}
+.booking-restaurant-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:#fff}
+.booking-discount-info{font-size:14px;color:var(--gold);margin-top:4px}
+.maps-btn{display:flex;align-items:center;gap:8px;background:var(--dark2);border:1px solid #2a2a2a;border-radius:12px;padding:12px 16px;color:var(--text);font-size:14px;cursor:pointer;margin-bottom:16px;text-decoration:none;transition:border-color 0.2s}
+.maps-btn:hover{border-color:var(--gold)}
+.maps-btn span{font-size:20px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;display:block}
+.form-input{width:100%;background:var(--dark2);border:1px solid #2a2a2a;border-radius:12px;padding:14px 16px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;-webkit-appearance:none;text-align:right}
+.form-input:focus{border-color:var(--gold)}
+.form-input::placeholder{color:#444}
+.form-input.error{border-color:#e57373}
+.submit-btn{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);border:none;padding:16px;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px;transition:opacity 0.2s}
+.submit-btn:disabled{opacity:0.6;cursor:not-allowed}
+.error-msg{font-size:11px;color:#e57373;margin-top:4px;display:none}
+.error-msg.visible{display:block}
+.success-screen{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 0 100px}
+.success-icon{width:70px;height:70px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:16px;animation:pop 0.4s ease}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+.success-title{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--cream);margin-bottom:8px}
+.success-text{font-size:13px;color:var(--muted);line-height:1.6;max-width:280px;margin-bottom:20px}
+.qr-container{background:white;border-radius:16px;padding:20px;margin-bottom:20px;display:inline-block}
+.qr-container img{display:block;width:200px;height:200px}
+.voucher-code{background:var(--dark2);border:1px solid var(--gold);border-radius:12px;padding:14px 20px;margin-bottom:20px;width:100%}
+.voucher-label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.voucher-value{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);font-weight:700;letter-spacing:2px}
+.booking-summary{background:var(--dark2);border:1px solid #222;border-radius:var(--radius);padding:16px 20px;width:100%;text-align:right}
+.summary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:13px}
+.summary-row:last-child{border-bottom:none}
+.summary-row span:first-child{color:var(--muted)}
+.summary-row span:last-child{color:var(--cream);font-weight:500}
+.discount-row span:last-child{color:#4caf82 !important}
+.instructions{background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:14px;margin-top:16px;text-align:right;width:100%}
+.instructions p{font-size:12px;color:var(--muted);line-height:1.7}
+.instructions strong{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-top">
+    <button class="back-btn" id="backBtn" onclick="goBack()">→</button>
+    <div class="header-info">
+      <h1 id="headerTitle">Alamine Batumi</h1>
+      <p id="headerSub">المطاعم الحلال</p>
+    </div>
+  </div>
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+  </div>
+</div>
+
+<div class="screen active" id="screen-catalog">
+  <p class="section-title">المطاعم الحلال المتاحة</p>
+  <div class="restaurant-grid" id="restaurant-grid">
+    <div class="loading">
+      <div class="loader"></div>
+      <div class="loading-text">جار تحميل المطاعم</div>
+      <div class="loading-sub">يرجى الانتظار...</div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-booking">
+  <div class="booking-hero">
+    <div class="booking-hero-placeholder" id="booking-placeholder">🍽</div>
+    <img class="booking-hero-img" id="booking-img" src="" alt="" style="display:none">
+    <div class="booking-hero-overlay"></div>
+    <div class="booking-hero-content">
+      <div class="booking-restaurant-name" id="booking-name"></div>
+      <div class="booking-discount-info" id="booking-discount-info"></div>
+    </div>
+  </div>
+  <a class="maps-btn" id="maps-link" href="#" target="_blank">
+    <span>📍</span>
+    <div>
+      <div style="font-size:13px;font-weight:500">عرض الموقع على الخريطة</div>
+      <div style="font-size:11px;color:var(--muted)" id="maps-location-text"></div>
+    </div>
+    <span style="margin-right:auto;color:var(--gold)">‹</span>
+  </a>
+  <div class="form-group">
+    <label class="form-label">الاسم الكامل</label>
+    <input type="text" class="form-input" id="input-name" placeholder="أدخل اسمك الكامل" autocomplete="name">
+    <div class="error-msg" id="nameError">يرجى إدخال اسمك</div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">رقم الهاتف</label>
+    <input type="tel" class="form-input" id="input-phone" placeholder="+995 555 000 000" autocomplete="tel">
+    <div class="error-msg" id="phoneError">يرجى إدخال رقم هاتفك</div>
+  </div>
+  <button class="submit-btn" id="submit-btn" onclick="submitBooking()">احصل على رمز QR للخصم ✓</button>
+</div>
+
+<div class="screen" id="screen-qr">
+  <div class="success-screen">
+    <div class="success-icon">🎫</div>
+    <div class="success-title">قسيمة الخصم الخاصة بك</div>
+    <div class="success-text">أظهر رمز QR هذا في المطعم للحصول على خصمك. صالح للاستخدام مرة واحدة فقط.</div>
+    <div class="qr-container">
+      <img id="qr-image" src="" alt="QR Code">
+    </div>
+    <div class="voucher-code">
+      <div class="voucher-label">رمز القسيمة</div>
+      <div class="voucher-value" id="voucher-code-text"></div>
+    </div>
+    <div class="booking-summary" id="booking-summary"></div>
+    <div class="instructions">
+      <p><strong>كيفية الاستخدام:</strong><br>
+      1. أظهر رمز QR لموظف المطعم<br>
+      2. سيقوم بمسحه بكاميرا هاتفه<br>
+      3. سيتم تطبيق الخصم على فاتورتك<br>
+      4. <strong>صالح للاستخدام مرة واحدة فقط</strong></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const tg=window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();tg.setHeaderColor('#0D0D0D');tg.setBackgroundColor('#0D0D0D')}
+const WEBHOOK_URL='https://n8n.srv1678654.hstgr.cloud/webhook/a80c982a-fe3b-41bf-8cf4-72c569076cdb';
+const VERIFY_BASE='https://khirmohamoha-pixel.github.io/Batumi-tours/verify.html';
+const SHEET_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vQx6MRSWrgxeEJuUkuvaLc0CWBmM6uQ0XvH7M7YwNMtY_yrsqCRsGOJ7EQEG1i-u-ZYojj0bafqPjev/pub?gid=0&single=true&output=csv';
+const SHEET_URL='https://corsproxy.io/?'+encodeURIComponent(SHEET_CSV);
+let restaurants=[];
+let selected=null;
+let currentScreen='catalog';
+let screenHistory=[];
+
+async function loadRestaurants(){
+  try{
+    const res=await fetch(SHEET_URL);
+    const csv=await res.text();
+    const lines=csv.trim().split('\n');
+    const headers=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/\s+/g,'_'));
+    restaurants=lines.slice(1).map(line=>{
+      const vals=line.split(',');
+      const r={};
+      headers.forEach((h,i)=>r[h]=vals[i]?.trim()||'');
+      return r;
+    }).filter(r=>r.name);
+    renderRestaurants();
+  }catch(e){
+    document.getElementById('restaurant-grid').innerHTML='<div class="loading"><div style="font-size:32px;margin-bottom:12px">⚠️</div><div class="loading-text">فشل التحميل</div><div class="loading-sub">يرجى الإغلاق والمحاولة مجدداً</div></div>';
+  }
+}
+
+function renderRestaurants(){
+  const grid=document.getElementById('restaurant-grid');
+  grid.innerHTML=restaurants.map(r=>`
+    <div class="restaurant-card" onclick="selectRestaurant(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+      ${r.image?`<img class="restaurant-img" src="${r.image}" alt="${r.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:'' }
+      <div class="restaurant-img-placeholder" ${r.image?'style="display:none"':''}>🍽</div>
+      <div class="restaurant-info">
+        <div class="restaurant-header">
+          <div class="restaurant-name">${r.name}</div>
+          ${r.discount?`<div class="discount-badge">${r.discount}% خصم</div>`:''}
+        </div>
+        <div class="restaurant-desc">${r.description||''}</div>
+        <div class="restaurant-meta">
+          ${r.location?`<div class="meta-item"><span>📍</span><span>${r.location}</span></div>`:''}
+        </div>
+        <div class="restaurant-footer">
+          <div class="halal-badge">✓ حلال معتمد</div>
+          <button class="book-btn" onclick="event.stopPropagation();selectRestaurant(${JSON.stringify(r).replace(/"/g,'&quot;')})">احصل على خصم</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectRestaurant(r){
+  if(typeof r==='string') r=JSON.parse(r.replace(/&quot;/g,'"'));
+  selected=r;
+  const img=document.getElementById('booking-img');
+  const placeholder=document.getElementById('booking-placeholder');
+  if(r.image){img.src=r.image;img.style.display='block';placeholder.style.display='none';}
+  else{img.style.display='none';placeholder.style.display='flex';}
+  document.getElementById('booking-name').textContent=r.name;
+  document.getElementById('booking-discount-info').textContent=r.discount?`خصم ${r.discount}% على فاتورتك`:'عرض خاص متاح';
+  if(r.maps_link){document.getElementById('maps-link').href=r.maps_link;document.getElementById('maps-link').style.display='flex';}
+  else{document.getElementById('maps-link').style.display='none';}
+  document.getElementById('maps-location-text').textContent=r.location||'';
+  document.getElementById('input-name').value='';
+  document.getElementById('input-phone').value='';
+  document.querySelectorAll('.error-msg').forEach(e=>e.classList.remove('visible'));
+  document.querySelectorAll('.form-input').forEach(e=>e.classList.remove('error'));
+  document.getElementById('submit-btn').disabled=false;
+  document.getElementById('submit-btn').textContent='احصل على رمز QR للخصم ✓';
+  showScreen('booking');
+  updateHeader('booking',r.name);
+}
+
+function showScreen(name){
+  screenHistory.push(currentScreen);
+  currentScreen=name;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  window.scrollTo(0,0);
+  updateDots();
+  document.getElementById('backBtn').classList.toggle('visible',name!=='catalog');
+}
+
+function goBack(){
+  if(screenHistory.length===0) return;
+  currentScreen=screenHistory.pop();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+currentScreen).classList.add('active');
+  window.scrollTo(0,0);
+  updateDots();
+  updateHeader(currentScreen);
+  document.getElementById('backBtn').classList.toggle('visible',currentScreen!=='catalog');
+}
+
+function updateHeader(screen,subtitle){
+  const titles={catalog:'Alamine Batumi',booking:subtitle||'احصل على خصم',qr:'قسيمتك'};
+  const subs={catalog:'المطاعم الحلال',booking:'أدخل بياناتك',qr:'أظهرها في المطعم'};
+  document.getElementById('headerTitle').textContent=titles[screen]||'Alamine Batumi';
+  document.getElementById('headerSub').textContent=subs[screen]||'';
+}
+
+function updateDots(){
+  const map={catalog:0,booking:1,qr:2};
+  const step=map[currentScreen]||0;
+  document.querySelectorAll('.step-dot').forEach((d,i)=>{
+    d.classList.toggle('active',i===step);
+    d.classList.toggle('done',i<step);
+  });
+}
+
+function generateId(){
+  return Date.now().toString(36).toUpperCase()+Math.random().toString(36).substr(2,4).toUpperCase();
+}
+
+async function submitBooking(){
+  let valid=true;
+  const name=document.getElementById('input-name').value.trim();
+  const phone=document.getElementById('input-phone').value.trim();
+  if(!name){document.getElementById('nameError').classList.add('visible');document.getElementById('input-name').classList.add('error');valid=false;}
+  else{document.getElementById('nameError').classList.remove('visible');document.getElementById('input-name').classList.remove('error');}
+  if(!phone){document.getElementById('phoneError').classList.add('visible');document.getElementById('input-phone').classList.add('error');valid=false;}
+  else{document.getElementById('phoneError').classList.remove('visible');document.getElementById('input-phone').classList.remove('error');}
+  if(!valid) return;
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;
+  btn.textContent='جار إنشاء رمز QR...';
+  const bookingId=generateId();
+  const verifyUrl=`${VERIFY_BASE}?id=${bookingId}&activity=${encodeURIComponent(selected.name)}&name=${encodeURIComponent(name)}&people=1&date=&discount=${selected.discount||0}&phone=${encodeURIComponent(phone)}`;
+  const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(verifyUrl)}`;
+  const bookingData={type:'halal',lang:'ar',booking_id:bookingId,restaurant:selected.name,discount:selected.discount||0,name,phone,location:selected.location||''};
+  try{
+    await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bookingData)});
+  }catch(e){console.log('Webhook error:',e);}
+  document.getElementById('qr-image').src=qrUrl;
+  document.getElementById('voucher-code-text').textContent=bookingId;
+  document.getElementById('booking-summary').innerHTML=`
+    <div class="summary-row"><span>المطعم</span><span>${selected.name}</span></div>
+    <div class="summary-row"><span>الاسم</span><span>${name}</span></div>
+    <div class="summary-row"><span>الهاتف</span><span>${phone}</span></div>
+    <div class="summary-row discount-row"><span>الخصم</span><span>${selected.discount||0}% على الفاتورة</span></div>
+  `;
+  showScreen('qr');
+  updateHeader('qr');
+  document.getElementById('backBtn').classList.remove('visible');
+}
+
+loadRestaurants();
+</script>
+</body>
+</html>
