@@ -174,8 +174,8 @@ const tg=window.Telegram?.WebApp;
 if(tg){tg.ready();tg.expand();tg.setHeaderColor('#0D0D0D');tg.setBackgroundColor('#0D0D0D')}
 const WEBHOOK_URL='https://n8n.srv1678654.hstgr.cloud/webhook/a80c982a-fe3b-41bf-8cf4-72c569076cdb';
 const VERIFY_BASE='https://khirmohamoha-pixel.github.io/Batumi-tours/verify.html';
-const SHEET_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vQx6MRSWrgxeEJuUkuvaLc0CWBmM6uQ0XvH7M7YwNMtY_yrsqCRsGOJ7EQEG1i-u-ZYojj0bafqPjev/pub?gid=0&single=true&output=csv&v=2';
-const SHEET_URL='https://corsproxy.io/?url='+encodeURIComponent(SHEET_CSV);
+const SHEET_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vQx6MRSWrgxeEJuUkuvaLc0CWBmM6uQ0XvH7M7YwNMtY_yrsqCRsGOJ7EQEG1i-u-ZYojj0bafqPjev/pub?gid=0&single=true&output=csv';
+const SHEET_URL='https://corsproxy.io/?url='+encodeURIComponent(SHEET_CSV)+'&t='+Date.now();
 let restaurants=[];
 let selected=null;
 let currentScreen='catalog';
